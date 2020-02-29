@@ -1,0 +1,181 @@
+#include<graphics.h>
+#include<iostream>
+#include<conio.h>
+#include<vector>
+using namespace std;
+
+int* intersect_xy(int xs, int ys,int xp,int yp)
+{
+	int xrec1,yrec1,xrec2,yrec2;
+	//for choosing the rectangle line
+	if(xs>=20 & xs<=130)
+	{
+		//for choosing vertical lines
+		xrec1=20;
+		xrec2=130;
+		if(ys>80)
+		yrec1=yrec2=80;
+		else
+		yrec1=yrec2=30;
+	}
+	else
+	{
+		//for choosing horizontal lines
+		yrec1=30;
+		yrec2=80;
+		if(xs>130)
+		xrec1=xrec2=130;
+		else
+		xrec1=xrec2=20;
+	}
+	int point[2]={0};
+	//Line AB represented as a1x + b1y = c1(Polygon line)
+	int a1 = yp - ys; 
+    int b1 = xs - xp; 
+    int c1 = a1*(xs) + b1*(ys); 
+  
+    // Line CD represented as a2x + b2y = c2 (Rectangle)
+    int a2 = yrec2 - yrec1; 
+    int b2 = xrec1 - xrec2; 
+    int c2 = a2*(xrec1)+ b2*(yrec1); 
+  
+    int determinant = a1*b2 - a2*b1; 
+    //calculating intersection points using determinant method
+    int x = (b2*c1 - b1*c2)/determinant; 
+    int y = (a1*c2 - a2*c1)/determinant; 
+    point[0]=x;
+    point[1]=y;
+	return point;
+}
+bool inside(int x, int y)
+{
+	int flagx=0,flagy=0;
+	//for x
+	if(x>=20&x<=130)
+	flagx=1;
+	//for y
+	if(y>=30& y<=80)
+	flagy=1;
+	
+	//if both x and y coordinates are in range then only the point is inside
+	if(flagx==1&flagy==1)
+	return true;
+	else
+	return false;
+}
+
+vector<int> clip_polygon(vector<int> poly)
+{
+	//putting the last point in xs and ys
+   //(ignoring last 2 points as they are same as first as required to run drawpoly)
+	int xs=poly[poly.size()-4];
+	int ys=poly[poly.size()-3];
+	int xp=0;
+	int yp=0;
+	int xintersect=0,yintersect=0;
+	//vector(array) to store clipped polygpon points
+	vector<int> output;
+	//to store intersection points
+	int* point= new int[2];
+	int loop_condition= (poly.size()-2)/2;
+	for(int i=0,j=0,k=1;i<loop_condition;i++)
+	{
+	
+		xp= poly[j];
+		yp=poly[k];
+		if(inside(xp,yp))
+		{
+			
+				if(inside(xs,ys))
+				{
+					
+				    output.push_back(xp); 
+				    output.push_back(yp);
+				}
+				else{
+					    point= intersect_xy(xs,ys,xp,yp);
+						xintersect=point[0];
+						yintersect=point[1];						
+						output.push_back(xintersect);
+						output.push_back(yintersect);
+						output.push_back(xp); 
+						output.push_back(yp);
+               }
+		}
+		else{
+			if(inside(xs,ys))
+			{
+				point= intersect_xy(xp,yp,xs,ys);
+			    xintersect=point[0];
+				yintersect=point[1];
+				output.push_back(xintersect);
+				output.push_back(yintersect);
+			}
+			
+		}
+		//assigning new xs and ys points
+		xs=xp;
+		ys=yp;
+		
+		j=j+2; 
+		k=j+1;
+	}
+	
+	output.push_back(output[0]);
+	output.push_back(output[1]);
+	return output;
+}
+
+int main()
+{
+	int edge;
+	int rec[]={20,80,130,80,130,30,20,30,20,80};
+	cout<<"Enter the number of edges ::";
+	cin>>edge;
+	edge+=1;
+	vector<int>a(2*edge);
+	//sample input array
+//	vector<int>a;
+//	a.push_back(60);
+//	a.push_back(40);
+//	a.push_back(60);
+//	a.push_back(70);
+//	a.push_back(200);
+//	a.push_back(70);
+//	a.push_back(60);
+//	a.push_back(40);
+	 
+	int c=1;
+	cout<<"\nEnter the Vertices :: \n";
+	
+	for(int i=0,j=0,k=1;i<edge-1;)
+	{
+		cout<<"\nEnter the coordinates of X"<<c<<":: ";
+		cin>>a[j];
+		cout<<"\nEnter the coordinates of Y"<<c<<":: ";
+		cin>>a[k];
+		c++;
+		i++;
+		j=j+2; 
+		k=j+1;
+		
+	}
+	a[a.size()-1]=a[1];
+	a[a.size()-2]=a[0];
+	
+	//to draw rectangle and polygon before clipping
+	int gd = DETECT, gm;
+	initgraph(&gd, &gm, ""); 
+    drawpoly(4,a.data());
+    drawpoly(5,rec);
+    
+    vector<int> result=clip_polygon(a);
+    //to calculate number of edges of new polygon
+    int result_edge= result.size()/2;
+    
+    //to change color of polygon
+    setcolor(RED); 
+    drawpoly(result_edge,result.data());
+    getch();
+	return 0;
+}
